@@ -42,6 +42,13 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
+      - name: Configure AndroidX
+        run: |
+          mkdir -p android
+          touch android/gradle.properties
+          grep -qxF 'android.useAndroidX=true' android/gradle.properties || \
+            echo 'android.useAndroidX=true' >> android/gradle.properties
+
       - name: Generate debug keystore
         run: |
           mkdir -p ~/.android
