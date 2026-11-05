@@ -25,10 +25,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set Up Gradle 8.10.2
-        uses: gradle/actions/setup-gradle@v4
+      - name: Set Up Android SDK
+        uses: android-actions/setup-android@v3
         with:
-          gradle-version: '8.10.2'
+          packages: platform-tools
+          accept-android-sdk-licenses: true
 
       - name: Install Android SDK Packages
         run: |
@@ -37,8 +38,10 @@ jobs:
             "platforms;android-35" \
             "build-tools;35.0.0"
 
-      - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses || true
+      - name: Set Up Gradle 8.10.2
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
 
       - name: Build Debug APK
         run: gradle -p android assembleDebug --stacktrace
