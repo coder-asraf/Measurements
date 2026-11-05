@@ -2,9 +2,15 @@ name: Build XYZ Measure Android APK
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
+
   pull_request:
-    branches: [main, master]
+    branches:
+      - main
+      - master
+
   workflow_dispatch:
 
 permissions:
@@ -12,20 +18,20 @@ permissions:
 
 jobs:
   build:
-    name: Compile Android App
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v5
 
-      - name: Set up Java
+      - name: Set Up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
+      - name: Set Up Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: platform-tools
@@ -37,39 +43,48 @@ jobs:
             "platforms;android-35" \
             "build-tools;35.0.0"
 
-      - name: Set up Gradle
+          sdkmanager --licenses
+
+      - name: Set Up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
 
-      - name: Configure AndroidX
+      - name: Verify Project Structure
         run: |
-          mkdir -p android
-          touch android/gradle.properties
-          grep -qxF 'android.useAndroidX=true' android/gradle.properties || \
-            echo 'android.useAndroidX=true' >> android/gradle.properties
+          test -f android/settings.gradle.kts
+          test -f android/build.gradle.kts
+          test -f android/app/build.gradle.kts
+          test -f android/app/src/main/AndroidManifest.xml
+          test -f android/gradle.properties
 
-      - name: Generate debug keystore
+          echo "Android project structure verified."
+
+      - name: Build Debug APK
         run: |
-          mkdir -p ~/.android
-          keytool -genkeypair \
-            -v \
-            -keystore ~/.android/debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          gradle \
+            -p android \
+            clean \
+            assembleDebug \
+            --no-daemon \
+            --max-workers=2 \
+            --stacktrace
 
-      - name: Build APK
-        run: gradle -p android assembleDebug --stacktrace
+      - name: Verify APK
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ ! -f "$APK" ]; then
+            echo "APK was not generated."
+            exit 1
+          fi
+
+          ls -lh "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: XYZ-Measure-APK
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
