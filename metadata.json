@@ -1,0 +1,9 @@
+{
+  "name": "XYZ Measure - 3D Surveying & Math Exploration",
+  "description": "Native Android 3D measurement, surveying clinometer, trigonometry calculation, and scientific error analysis platform.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
